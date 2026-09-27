@@ -154,6 +154,7 @@
             position: relative;
             overflow: hidden;
             word-break: break-word;
+            cursor: pointer;
         }
 
         /* 左上のパッド（SLICE BOY） */
@@ -235,7 +236,7 @@
             </a>
 
             <!-- PAD 3〜16: Coming Soon -->
-          <a href="https://jogo-jpn.github.io/super_eselator/" class="pad active-tool">
+            <a href="https://jogo-jpn.github.io/super_eselator/" class="pad active-tool">
                 PAD 3
                 <span>SUPER</span>
                 <span>ESELATOR</span>
@@ -266,5 +267,57 @@
         </div>
     </div>
 
+    <script>
+        let audioCtx = null;
+
+        // ファミコン風決定音（ピロリン♪）を発音する関数
+        function playFamicomSelectSound() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            const now = audioCtx.currentTime;
+
+            // オシレーター（発振器）作成
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+
+            // ファミコン特有の「矩形波（square）」を設定
+            osc.type = 'square';
+
+            // 音圧の減衰設定（フェードアウト）
+            gain.gain.setValueAtTime(0.15, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+
+            // 1音目: B5 (約987Hz) ➔ 2音目: E6 (約1318Hz) への素早い周波数変化
+            osc.frequency.setValueAtTime(987.77, now);
+            osc.frequency.setValueAtTime(1318.51, now + 0.05);
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc.start(now);
+            osc.stop(now + 0.15);
+        }
+
+        // アクティブなパッド（ボタン）にクリックイベントを設定
+        document.querySelectorAll('.pad.active-tool').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault(); // 一旦デフォルトの遷移を止める
+                
+                playFamicomSelectSound();
+
+                const targetUrl = this.getAttribute('href');
+                
+                // 音が鳴り終わるタイミング（約120ms後）でページ移動
+                setTimeout(() => {
+                    window.location.href = targetUrl;
+                }, 120);
+            });
+        });
+    </script>
 </body>
 </html>
